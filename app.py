@@ -152,22 +152,20 @@ p, span, div, label, li, h1, h2, h3, h4, h5, h6 {
 
 /* --- UPDATED TEXTAREA FOR HIGH VISIBILITY --- */
 textarea, .stTextArea textarea {
-    background: rgba(15, 10, 30, 0.75) !important; /* Thoda dark container background takay text uth ke aaye */
-    color: #ffffff !important; /* Ekdam crisp pure white text */
-    font-size: 1.05rem !important; /* Thoda sa bada font */
-    font-weight: 500 !important; /* Normal se thoda solid weight */
+    background: rgba(15, 10, 30, 0.75) !important;
+    color: #ffffff !important;
+    font-size: 1.05rem !important;
+    font-weight: 500 !important;
     letter-spacing: 0.4px !important;
     border-radius: 14px !important;
-    border: 1px solid rgba(168, 85, 247, 0.4) !important; /* Purple neon tint border */
+    border: 1px solid rgba(168, 85, 247, 0.4) !important;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6) !important;
 }
 
-/* Input text focus state (jab click karein) */
 textarea:focus, .stTextArea textarea:focus {
-    border: 1px solid #38bdf8 !important; /* Cyan glow on selection */
+    border: 1px solid #38bdf8 !important;
     box-shadow: 0 0 12px rgba(56, 189, 248, 0.3) !important;
 }
-/* ------------------------------------------- */
 
 div.stButton > button {
     background: linear-gradient(90deg, #a855f7, #38bdf8);
@@ -197,14 +195,14 @@ st.markdown(
     '<div style="text-align:center; margin-bottom:24px;">'
     '<span class="badge">🤖 all-MiniLM-L6-v2</span>'
     '<span class="badge">🧠 Sentence-Transformers</span>'
-    '<span class="badge">📊 3D + 2D Visualizations</span>'
+    '<span class="badge">📊 Auto-Rotating 3D Space</span>'
     '<span class="badge">🆓 Free &amp; Pretrained</span>'
     '</div>',
     unsafe_allow_html=True,
 )
 
 # ----------------------------------------------------------------------------
-# LOAD PRETRAINED MODEL (cached, no training, no fine-tuning)
+# LOAD PRETRAINED MODEL
 # ----------------------------------------------------------------------------
 @st.cache_resource(show_spinner="Loading free pretrained model (all-MiniLM-L6-v2)...")
 def load_model():
@@ -262,13 +260,10 @@ if run and user_text.strip():
     candidates = lines[1:]
     all_items = [query] + candidates
 
-    # Embeddings from the pretrained model directly — no preprocessing applied
     embeddings = model.encode(all_items)
-
     query_emb = embeddings[0]
     cand_embs = embeddings[1:]
 
-    # Cosine similarity
     def cosine_sim(a, b):
         return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
@@ -324,9 +319,10 @@ if run and user_text.strip():
     st.plotly_chart(fig_heat, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # ---------------------- GRAPH 3: 3D EMBEDDING PLOT (PCA) ----------------------
-    st.markdown('<div class="section-header">🌌 Graph 3 — 3D Rotating Embedding Space (PCA)</div>', unsafe_allow_html=True)
+    # ---------------------- GRAPH 3: 3D AUTO-ROTATING EMBEDDING SPACE ----------------------
+    st.markdown('<div class="section-header">🌌 Graph 3 — Live Auto-Rotating Embedding Space (PCA)</div>', unsafe_allow_html=True)
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    
     n_components = min(3, len(all_items))
     pca = PCA(n_components=n_components)
     reduced = pca.fit_transform(embeddings)
@@ -337,26 +333,80 @@ if run and user_text.strip():
     colors = ["#ec4899"] + ["#38bdf8"] * len(candidates)
     sizes = [22] + [14] * len(candidates)
 
-    fig3d = go.Figure(data=[go.Scatter3d(
-        x=reduced[:, 0], y=reduced[:, 1], z=reduced[:, 2],
-        mode="markers+text",
-        text=short_labels,
-        textposition="top center",
-        marker=dict(size=sizes, color=colors, opacity=0.9, line=dict(width=1, color="white")),
-    )])
-    fig3d.update_layout(
-        template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)",
-        scene=dict(
-            xaxis=dict(title="PC1", backgroundcolor="rgba(0,0,0,0)"),
-            yaxis=dict(title="PC2", backgroundcolor="rgba(0,0,0,0)"),
-            zaxis=dict(title="PC3", backgroundcolor="rgba(0,0,0,0)"),
-        ),
-        height=620,
-        margin=dict(l=0, r=0, t=10, b=0),
-        scene_camera=dict(eye=dict(x=1.6, y=1.6, z=1.0)),
+    # Animation frames generate karenge camera angle change karne ke liye
+    frames = []
+    steps = 60  # Poore 360 degree rotation ke liye smooth steps
+    for i in range(steps):
+        angle = (i / steps) * 2 * np.pi
+        # Circular orbit path for the camera eye
+        frames.append(go.Frame(
+            layout=dict(
+                scene_camera=dict(
+                    eye=dict(
+                        x=1.8 * np.cos(angle),
+                        y=1.8 * np.sin(angle),
+                        z=1.0
+                    )
+                )
+            ),
+            name=f"frame_{i}"
+        ))
+
+    fig3d = go.Figure(
+        data=[go.Scatter3d(
+            x=reduced[:, 0], y=reduced[:, 1], z=reduced[:, 2],
+            mode="markers+text",
+            text=short_labels,
+            textposition="top center",
+            marker=dict(size=sizes, color=colors, opacity=0.9, line=dict(width=1, color="white")),
+        )],
+        frames=frames
     )
+    
+    # Auto-play buttons layout configuration
+    fig3d.update_layout(
+        template="plotly_dark", 
+        paper_bgcolor="rgba(0,0,0,0)",
+        scene=dict(
+            xaxis=dict(title="PC1", backgroundcolor="rgba(0,0,0,0)", showgrid=True),
+            yaxis=dict(title="PC2", backgroundcolor="rgba(0,0,0,0)", showgrid=True),
+            zaxis=dict(title="PC3", backgroundcolor="rgba(0,0,0,0)", showgrid=True),
+        ),
+        height=650,
+        margin=dict(l=0, r=0, t=10, b=0),
+        scene_camera=dict(eye=dict(x=1.8, y=0.0, z=1.0)),
+        updatemenus=[dict(
+            type="buttons",
+            showactive=False,
+            x=0.05, y=0.05,
+            xanchor="left", yanchor="bottom",
+            pad=dict(t=0, r=10),
+            buttons=[
+                dict(
+                    label="▶ Live Spin",
+                    method="animate",
+                    args=[None, dict(
+                        frame=dict(duration=50, redraw=False), # Chalti rahe bina screen refresh kiye
+                        fromcurrent=True, 
+                        transition=dict(duration=0, easing="linear"),
+                        loop=True # Ghoomna rukna nahi chahiye, loop true rakha hai!
+                    )]
+                ),
+                dict(
+                    label="⏸ Pause",
+                    method="animate",
+                    args=[[None], dict(
+                        frame=dict(duration=0, redraw=False),
+                        mode="immediate",
+                        fromcurrent=True
+                    )]
+                )
+            ]
+        )]
+    )
+    
     st.plotly_chart(fig3d, use_container_width=True)
-    st.caption("🖱️ Drag to rotate the 3D embedding space — pink = query, blue = candidates.")
+    st.caption("✨ **Auto-Orbit Engine Active:** Graph automatically ghoomane ke liye niche diye gaye **'▶ Live Spin'** button par click karein! Aap isko pause karke khud bhi drag kar sakte hain.")
     st.markdown('</div>', unsafe_allow_html=True)
 
     # ---------------------- CRITICAL THINKING NOTES ----------------------
