@@ -1,8 +1,5 @@
 streamlit
 sentence-transformers
+plotly
 scikit-learn
-matplotlib
-seaborn
 numpy
-pandas
-torch
