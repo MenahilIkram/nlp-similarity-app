@@ -150,12 +150,24 @@ p, span, div, label, li, h1, h2, h3, h4, h5, h6 {
     border-right: 1px solid rgba(255,255,255,0.08);
 }
 
+/* --- UPDATED TEXTAREA FOR HIGH VISIBILITY --- */
 textarea, .stTextArea textarea {
-    background: rgba(255,255,255,0.05) !important;
-    color: #fff !important;
+    background: rgba(15, 10, 30, 0.75) !important; /* Thoda dark container background takay text uth ke aaye */
+    color: #ffffff !important; /* Ekdam crisp pure white text */
+    font-size: 1.05rem !important; /* Thoda sa bada font */
+    font-weight: 500 !important; /* Normal se thoda solid weight */
+    letter-spacing: 0.4px !important;
     border-radius: 14px !important;
-    border: 1px solid rgba(255,255,255,0.15) !important;
+    border: 1px solid rgba(168, 85, 247, 0.4) !important; /* Purple neon tint border */
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6) !important;
 }
+
+/* Input text focus state (jab click karein) */
+textarea:focus, .stTextArea textarea:focus {
+    border: 1px solid #38bdf8 !important; /* Cyan glow on selection */
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.3) !important;
+}
+/* ------------------------------------------- */
 
 div.stButton > button {
     background: linear-gradient(90deg, #a855f7, #38bdf8);
