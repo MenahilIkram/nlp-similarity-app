@@ -108,7 +108,7 @@ p, span, div, label, li, h1, h2, h3, h4, h5, h6 {
 }
 @keyframes glow {
     from { filter: drop-shadow(0 0 8px rgba(168,85,247,0.4)); }
-    to   { filter: drop-shadow(0 0 22px rgba(56,189,248,0.6)); }
+    to   { filter: drop-shadow(0 0 22px rgba(56, 189, 248, 0.6)); }
 }
 .hero-sub {
     text-align: center;
@@ -177,18 +177,19 @@ textarea:focus, .stTextArea textarea:focus {
     box-shadow: 0 0 12px rgba(56, 189, 248, 0.3) !important;
 }
 
-div.stButton > button {
-    background: linear-gradient(90deg, #a855f7, #38bdf8);
-    color: white;
-    border: none;
-    border-radius: 14px;
-    padding: 10px 26px;
-    font-weight: 600;
-    transition: transform 0.2s ease;
+/* Custom Overrides for download/standard buttons to blend perfectly */
+div.stButton > button, div.stDownloadButton > button {
+    background: linear-gradient(90deg, #a855f7, #38bdf8) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 14px !important;
+    padding: 10px 26px !important;
+    font-weight: 600 !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
 }
-div.stButton > button:hover {
-    transform: scale(1.04);
-    box-shadow: 0 0 18px rgba(168,85,247,0.5);
+div.stButton > button:hover, div.stDownloadButton > button:hover {
+    transform: scale(1.04) !important;
+    box-shadow: 0 0 18px rgba(168,85,247,0.5) !important;
 }
 
 #MainMenu {visibility: hidden;}
@@ -297,7 +298,6 @@ if run and user_text.strip():
     st.markdown('<div class="section-header">🕵️‍♂️ Dynamic Analysis — Cyber Anomaly Scanner</div>', unsafe_allow_html=True)
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     
-    # Mathematical Outlier Logic: The sentence with lowest overall mean similarity across the system
     mean_connectivity = np.mean(sim_matrix, axis=1)
     outlier_global_idx = np.argmin(mean_connectivity)
     outlier_text = all_items[outlier_global_idx]
@@ -393,13 +393,60 @@ if run and user_text.strip():
         st.plotly_chart(fig_violin, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # ---------------------- RESULTS TABLE ----------------------
-    st.markdown('<div class="section-header">📌 Step 2 — Similarity Results</div>', unsafe_allow_html=True)
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.markdown(f"**Query:** _{query}_")
-    for rank, idx in enumerate(top_idx, start=1):
-        st.markdown(f"**{rank}.** {candidates[idx]}  —  similarity score: **{sims[idx]:.4f}**")
-    st.markdown('</div>', unsafe_allow_html=True)
+    # ---------------------- RESULTS TABLE & EXPORTER ----------------------
+    st.markdown('<div class="section-header">📌 Step 2 — Similarity Results &amp; Reports</div>', unsafe_allow_html=True)
+    
+    col_results, col_download = st.columns([2, 1])
+    
+    with col_results:
+        st.markdown('<div class="glass-card" style="height: 100%;">', unsafe_allow_html=True)
+        st.markdown(f"**Query:** _{query}_")
+        for rank, idx in enumerate(top_idx, start=1):
+            st.markdown(f"**{rank}.** {candidates[idx]}  —  similarity score: **{sims[idx]:.4f}**")
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+    with col_download:
+        st.markdown('<div class="glass-card" style="height: 100%; text-align: center;">', unsafe_allow_html=True)
+        st.markdown("### 📋 System Export")
+        st.caption("Generate and download a comprehensive structured log file of this execution matrix.")
+        
+        # Build the dynamic Text Report string
+        report_data = f"""=======================================================
+NEUROSIM SYSTEM AUDIT REPORT
+=======================================================
+Generated using Free Pretrained model (all-MiniLM-L6-v2)
+
+[TARGET QUERY]
+-> {query}
+
+[TOP CONCEPTUAL MATCH]
+-> {candidates[best_idx]} (Score: {sims[best_idx]:.4f})
+
+[SYSTEM ANOMALY SCANNED]
+-> Outlier: "{outlier_text}"
+   Reason: Lowest total cross-connectivity weight.
+
+[PAUL'S CRITICAL THINKING EVALUATION MATRIX]
+"""
+        for metric_name, val in paul_metrics.items():
+            report_data += f"- {metric_name}: {val}%\n"
+            
+        report_data += "\n[RANKED SIMILARITY RESULTS LIST]\n"
+        for rank, idx in enumerate(top_idx, start=1):
+            report_data += f"{rank}. {candidates[idx]} | Score: {sims[idx]:.4f}\n"
+            
+        report_data += "======================================================="
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        # Dynamic Streamlit Download button styled seamlessly
+        st.download_button(
+            label="📥 Export Cyber-Audit Report",
+            data=report_data,
+            file_name="neurosim_system_report.txt",
+            mime="text/plain"
+        )
+        st.markdown("<br><small style='color: #b9b6d6;'>Saves as formatted text file (.txt)</small>", unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
     # ---------------------- GRAPH 2: BAR CHART ----------------------
     st.markdown('<div class="section-header">📊 Graph 2 — Top Similar Items (Bar Chart)</div>', unsafe_allow_html=True)
@@ -428,8 +475,6 @@ if run and user_text.strip():
     short_labels = [t if len(t) <= 22 else t[:20] + "…" for t in all_items]
     
     fig_network = go.Figure()
-    
-    # Draw Synapse/Connection Lines based on threshold (above median similarity)
     matrix_median = np.median(sim_matrix)
     for i in range(len(all_items)):
         for j in range(i + 1, len(all_items)):
@@ -443,7 +488,6 @@ if run and user_text.strip():
                     showlegend=False
                 ))
                 
-    # Draw Nodes (Sentences)
     node_colors = ["#ec4899"] + ["#38bdf8"] * len(candidates)
     node_sizes = [18] + [12] * len(candidates)
     
