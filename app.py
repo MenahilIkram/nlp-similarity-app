@@ -24,6 +24,19 @@ st.markdown("""
 
 html, body, [class*="css"]  {
     font-family: 'Poppins', sans-serif;
+    color: #f1f0fa !important;
+}
+
+p, span, div, label, li, h1, h2, h3, h4, h5, h6 {
+    color: #f1f0fa;
+}
+
+.stMarkdown, .stMarkdown p {
+    color: #e8e6f5 !important;
+}
+
+.stCaption, [data-testid="stCaptionContainer"] {
+    color: #b9b6d6 !important;
 }
 
 /* Animated gradient + floating particles background */
@@ -356,10 +369,3 @@ if run and user_text.strip():
 
 else:
     st.info("👆 Enter your text in the box above and click **Run Similarity Analysis** to see results, graphs, and critical thinking notes.")
-
-st.markdown(
-    '<div style="text-align:center; margin-top:40px; color:#7c7c9c; font-size:0.85rem;">'
-    'Built for Shifa Tameer-e-Millat University · NLP Lab Quiz · Free Pretrained Model Demo'
-    '</div>',
-    unsafe_allow_html=True,
-)
