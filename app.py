@@ -84,6 +84,16 @@ p, span, div, label, li, h1, h2, h3, h4, h5, h6 {
     box-shadow: 0 12px 40px 0 rgba(168,85,247,0.25);
 }
 
+/* Cyber Anomaly Box styling */
+.anomaly-box {
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.15), rgba(15, 10, 30, 0.6));
+    padding: 18px;
+    border-radius: 16px;
+    border-left: 5px solid #ef4444;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
+}
+
 .hero-title {
     font-family: 'Space Grotesk', sans-serif;
     font-weight: 800;
@@ -277,6 +287,30 @@ if run and user_text.strip():
     best_idx = top_idx[0]
     worst_idx = order[-1]
 
+    # Calculate Global Pairwise Matrix for calculations
+    sim_matrix = np.zeros((len(all_items), len(all_items)))
+    for i in range(len(all_items)):
+        for j in range(len(all_items)):
+            sim_matrix[i, j] = cosine_sim(embeddings[i], embeddings[j])
+
+    # ---------------------- MAZEDAR FEATURE 1: CYBER ANOMALY OUTLIER DETECTOR ----------------------
+    st.markdown('<div class="section-header">🕵️‍♂️ Dynamic Analysis — Cyber Anomaly Scanner</div>', unsafe_allow_html=True)
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    
+    # Mathematical Outlier Logic: The sentence with lowest overall mean similarity across the system
+    mean_connectivity = np.mean(sim_matrix, axis=1)
+    outlier_global_idx = np.argmin(mean_connectivity)
+    outlier_text = all_items[outlier_global_idx]
+    
+    st.markdown(f"""
+    <div class="anomaly-box">
+        <strong style="color: #ef4444; font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem;">⚠️ SEMANTIC ANOMALY DETECTED (THE ODD ONE OUT):</strong><br>
+        <span style="font-style: italic; color: #f1f0fa;">"{outlier_text}"</span><br><br>
+        <small style="color: #b9b6d6;"><b>System Math Log:</b> This item shows the lowest semantic context connectivity (Average Matrix Weight: {mean_connectivity[outlier_global_idx]:.4f}) compared to all other active input streams.</small>
+    </div>
+    """, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
     # Derived Statistical Percentages for Paul's Standards (Visual Proof)
     score_range = float(np.max(sims) - np.min(sims))
     avg_score = float(np.mean(sims))
@@ -296,7 +330,6 @@ if run and user_text.strip():
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     st.caption("Custom verification layer calculating matrix behavior against intellectual standards.")
     
-    # Building a completely unique Polar Bar Chart instead of a standard Radar plot
     fig_polar = go.Figure(go.Barpolar(
         r=list(paul_metrics.values()),
         theta=list(paul_metrics.keys()),
@@ -307,9 +340,7 @@ if run and user_text.strip():
         opacity=0.8
     ))
     fig_polar.update_layout(
-        template="plotly_dark",
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
+        template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
         polar=dict(
             radialaxis=dict(range=[0, 100], gridcolor="rgba(255,255,255,0.15)", tickcolor="white"),
             angularaxis=dict(gridcolor="rgba(255,255,255,0.15)", tickfont=dict(size=12, color="white"))
@@ -319,11 +350,11 @@ if run and user_text.strip():
     st.plotly_chart(fig_polar, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # ---------------------- BRAND NEW FEATURE 1: TOP MATCH SPEEDOMETER ----------------------
+    # ---------------------- METRICS METERS ROW ----------------------
     col_g1, col_g2 = st.columns([1, 1])
     
     with col_g1:
-        st.markdown('<div class="section-header">🕹️ Unique Feature 1 — Conceptual Match Speedometer</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">🕹️ Metrics — Conceptual Match Speedometer</div>', unsafe_allow_html=True)
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         fig_gauge = go.Figure(go.Indicator(
             mode = "gauge+number",
@@ -347,9 +378,8 @@ if run and user_text.strip():
         st.plotly_chart(fig_gauge, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # ---------------------- BRAND NEW FEATURE 2: SIMILARITY DENSITY VIOLIN PLOT ----------------------
     with col_g2:
-        st.markdown('<div class="section-header">🎻 Unique Feature 2 — Score Density Profile</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">🎻 Metrics — Score Density Profile</div>', unsafe_allow_html=True)
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         fig_violin = px.violin(
             y=sims, box=True, points='all',
@@ -388,15 +418,58 @@ if run and user_text.strip():
     st.plotly_chart(fig_bar, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
+    # ---------------------- MAZEDAR FEATURE 2: 2D NEURAL CONSTELLATION GRAPH ----------------------
+    st.markdown('<div class="section-header">🌌 Unique Feature — Neural Constellation Network (2D Synapse Map)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    st.caption("Lines represent semantic synapses connecting concepts whose similarity scores cross the data matrix median threshold.")
+    
+    pca_2d = PCA(n_components=2)
+    coords_2d = pca_2d.fit_transform(embeddings)
+    short_labels = [t if len(t) <= 22 else t[:20] + "…" for t in all_items]
+    
+    fig_network = go.Figure()
+    
+    # Draw Synapse/Connection Lines based on threshold (above median similarity)
+    matrix_median = np.median(sim_matrix)
+    for i in range(len(all_items)):
+        for j in range(i + 1, len(all_items)):
+            if sim_matrix[i, j] > matrix_median:
+                fig_network.add_trace(go.Scatter(
+                    x=[coords_2d[i, 0], coords_2d[j, 0]],
+                    y=[coords_2d[i, 1], coords_2d[j, 1]],
+                    mode='lines',
+                    line=dict(color='rgba(168, 85, 247, 0.4)', width=1.5),
+                    hoverinfo='none',
+                    showlegend=False
+                ))
+                
+    # Draw Nodes (Sentences)
+    node_colors = ["#ec4899"] + ["#38bdf8"] * len(candidates)
+    node_sizes = [18] + [12] * len(candidates)
+    
+    fig_network.add_trace(go.Scatter(
+        x=coords_2d[:, 0], y=coords_2d[:, 1],
+        mode='markers+text',
+        text=short_labels,
+        textposition="top center",
+        marker=dict(size=node_sizes, color=node_colors, line=dict(width=1.5, color='white')),
+        hovertext=all_items,
+        hoverinfo='text',
+        name="Neural Node"
+    ))
+    
+    fig_network.update_layout(
+        template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        height=500, margin=dict(l=10, r=10, t=10, b=10)
+    )
+    st.plotly_chart(fig_network, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
     # ---------------------- GRAPH 3: HEATMAP ----------------------
     st.markdown('<div class="section-header">🔥 Graph 3 — Pairwise Similarity (Heatmap)</div>', unsafe_allow_html=True)
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    sim_matrix = np.zeros((len(all_items), len(all_items)))
-    for i in range(len(all_items)):
-        for j in range(len(all_items)):
-            sim_matrix[i, j] = cosine_sim(embeddings[i], embeddings[j])
-
-    short_labels = [t if len(t) <= 22 else t[:20] + "…" for t in all_items]
     fig_heat = go.Figure(data=go.Heatmap(
         z=sim_matrix, x=short_labels, y=short_labels,
         colorscale=[[0, "#0a0a18"], [0.5, "#a855f7"], [1, "#38bdf8"]],
@@ -460,7 +533,6 @@ if run and user_text.strip():
         "Fairness": "Limitation: MiniLM is a general-purpose model trained on broad web/text corpora — it may miss nuanced domain-specific meaning, sarcasm, or context-dependent phrasing, so scores should be interpreted as approximate semantic closeness, not ground truth.",
     }
     
-    # Using st.tabs for true dashboard layout (Click to load)
     tabs = st.tabs([f"🔍 {std} ({paul_metrics[std]}%)" for std in notes.keys()])
     
     for tab, (std, txt) in zip(tabs, notes.items()):
